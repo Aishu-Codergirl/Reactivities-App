@@ -1,14 +1,14 @@
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { useActivities } from "../../../lib/hooks/useActivities";
-type Props = {
-    closeForm: () => void;
-    activity: Activity | undefined;
- 
-}
+import { useNavigate, useParams } from "react-router";
 
 
-export default function ActivityForm({ closeForm, activity }: Props){
-  const { updateActivity, createActivity }=useActivities();
+
+export default function ActivityForm(){
+  const {id}  =useParams();
+  const { updateActivity, createActivity , activity ,isLoading}=useActivities(id);
+  const navigate = useNavigate();
+
 
 const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -19,20 +19,26 @@ const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
   if(activity){
     data.id = activity.id;
     await updateActivity.mutateAsync(data as unknown as Activity);
-    closeForm();
+    navigate(`/activities/${activity.id}`);
+ 
   }
   else{
-    await createActivity.mutateAsync(data as unknown as Activity);
-    closeForm();
+    await createActivity.mutate(data as unknown as Activity,{
+      onSuccess:(id)=>{
+        navigate(`/activities/${id}`);
+      }
+    });
+    navigate('/activities');
   }
  
 
 }
+if(isLoading) return <Typography variant="h5" align="center">Loading...</Typography>
 
     return (
       <Paper sx={{ borderRadius: 3, p: 3 }}>
         <Typography variant="h5" gutterBottom color="primary">
-        Create Activity
+          {activity ? "Edit Activity" : "Create Activity"}
         </Typography>
         <Box onSubmit={handleSubmitForm} component="form" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField name="title" label="Title" variant="outlined" fullWidth defaultValue={activity?.title || ""} />
@@ -44,7 +50,7 @@ const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
                        <TextField name="venue" label="Venue" defaultValue={activity?.venue || ""} />
                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
 <Button color="inherit" variant="outlined"
-onClick={closeForm}>
+onClick={()=>{}}>
                           Cancel
                         </Button>
                         <Button  type="submit" color="success" variant="contained"
